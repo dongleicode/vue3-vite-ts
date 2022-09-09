@@ -34,5 +34,10 @@ Vue Template Explorer 查看静态标记
         * Tree-Shaking 的支持
         * Composition API
 
+4、vite的优势
+    （1）冷服务 ESM 动态引入
+    （2）HMR 模块热更新
+    （3）Rollup打包代码，预配置，支持大部分Rollup插件
+
 
 
