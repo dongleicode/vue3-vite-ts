@@ -1,16 +1,23 @@
-<script setup lang="ts">
-const message:string = "<b style='color: red'>我是无敌的</b>"
-const num:number = 0
-const flag:boolean = true
+<template>
+
+   <ol>
+      <li @click="toBase()">base</li>
+      <!-- <router-link to="/base">base</router-link> -->
+      <li @click="toRef()">ref</li>
+   </ol>
+
+</template>
+<script setup lang='ts'>
+   import { useRouter } from 'vue-router'
+   const router = useRouter();
+   const toBase = () => {
+       router.push('/base')
+   }
+   const toRef = () => {
+      router.push('/ref')       
+   }
 
 </script>
-
-<template>
- <div>
-    <h1 v-show="flag" v-html="message"></h1>
- </div>
-</template>
-
 <style scoped>
 
 </style>

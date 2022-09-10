@@ -39,5 +39,7 @@ Vue Template Explorer 查看静态标记
     （2）HMR 模块热更新
     （3）Rollup打包代码，预配置，支持大部分Rollup插件
 
+5.vue源码地址：https://github.com/vuejs/core
+
 
 
