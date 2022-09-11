@@ -4,7 +4,7 @@
 
 </template>
 <script setup lang='ts'>
-    import { ref, reactive } from 'vue'
+    import { toRef, reactive, toRefs, toRaw } from 'vue'
 
 </script>
 <style scoped>

@@ -6,9 +6,7 @@
       <a-menu v-model:selectedKeys="selectedKeys" theme="dark" mode="inline">
          <a-sub-menu key="sub1">
             <template #icon>
-               <!-- <MailOutlined /> -->
                <meh-outlined />
-
             </template>
             <template #title>基础</template>
             <a-menu-item @click="toBase" key="1">base</a-menu-item>
