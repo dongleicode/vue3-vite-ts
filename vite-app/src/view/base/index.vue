@@ -1,31 +1,10 @@
-<script lang="ts">
-    // export default{
-    //     name: 'base'
-    // }
-//    const name:string = 'base'
-//    export default name;
-
-    
-   //  export default {
-   //    setup(){
-   //       // const name:string = 'base'
-   //       return {
-   //          name: 'base'
-   //       }
-   //    }
-   //  }
-    export default {
-      props: {
-         name: String
-      },
-      setup(){
-         const name = 'base'
-         return {
-            name
-         }
-      }
-    }
+<script setup lang="ts">
+    defineOptions({
+        name: 'base'
+    })
     import DiffAlgorithm from '../../components/DiffAlgorithm.vue'
+   
+
     const num:number = 0
     const flag:boolean = true
     const parent = ()=>{

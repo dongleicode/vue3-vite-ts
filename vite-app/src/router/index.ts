@@ -1,23 +1,26 @@
 import { createRouter, createWebHashHistory, RouteRecordRaw } from 'vue-router'
-import Ref from '../view/ref/index.vue'
-import Base from '../view/base/index.vue'
+const RefIndex = () => import('@/view/ref/index.vue') 
+const Base = () => import('@/view/base/index.vue')  
+const Home = () => import('@/App.vue')
 
 const routes:Array<RouteRecordRaw> = [ 
     {
         path: '/',
-        name: 'app',
-        component: () => import('../App.vue')
+        name: 'home',
+        component: Home
     },
     {
         path: '/base',
         name: 'base',
-        component: () => import('../view/base/index.vue')
+        component: Base,
+        children: [
+
+        ]
     },
     {
         path: '/ref',
-        name: 'ref',
-        //Component Object
-        component: Ref
+        name: 'refpage',
+        component: RefIndex
     }
 ]
 
