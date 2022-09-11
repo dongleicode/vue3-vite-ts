@@ -1,7 +1,8 @@
 <script setup lang="ts">
-    defineOptions({
-        name: 'base'
-    })
+   //抛出组件name，路由路径，可不写
+   //  defineOptions({
+   //      name: 'base'
+   //  })
     import DiffAlgorithm from '../../components/DiffAlgorithm.vue'
    
 

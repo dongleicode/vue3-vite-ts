@@ -2,6 +2,7 @@ import { createRouter, createWebHashHistory, RouteRecordRaw } from 'vue-router'
 const RefIndex = () => import('@/view/ref/index.vue') 
 const Base = () => import('@/view/base/index.vue')  
 const Home = () => import('@/App.vue')
+const Toref = () => import('@/view/ref/toRef.vue')
 
 const routes:Array<RouteRecordRaw> = [ 
     {
@@ -21,6 +22,11 @@ const routes:Array<RouteRecordRaw> = [
         path: '/ref',
         name: 'refpage',
         component: RefIndex
+    },
+    {
+        path: '/toref',
+        name: 'toref',
+        component: Toref
     }
 ]
 
