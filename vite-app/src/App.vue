@@ -9,20 +9,20 @@
                <meh-outlined />
             </template>
             <template #title>基础</template>
-            <a-menu-item @click="toBase" key="1">base</a-menu-item>
-            <a-menu-item @click="toRef" key="2">ref</a-menu-item>
-            <a-menu-item @click="toToref" key="3">toRef</a-menu-item>
-            <a-menu-item key="4">Option 8</a-menu-item>
+            <a-menu-item @click="toPage('base')" key="1">base</a-menu-item>
+            <a-menu-item @click="toPage('ref')" key="2">ref</a-menu-item>
+            <a-menu-item @click="toPage('toref')" key="3">toRef</a-menu-item>
+            <a-menu-item @click="toPage('computed')" key="4">computed</a-menu-item>
          </a-sub-menu>
-         <a-menu-item @click="toBase" key="8">
+         <a-menu-item @click="toPage('base')" key="8">
            <user-outlined />
            <span>base</span>
          </a-menu-item>
-         <a-menu-item @click="toRef" key="7">
+         <a-menu-item @click="toPage('base')" key="7">
            <video-camera-outlined />
            <span>ref</span>
          </a-menu-item>
-         <a-menu-item @click="toToref" key="9">
+         <a-menu-item @click="toPage('base')" key="9">
            <upload-outlined />
            <span>toRef</span>
          </a-menu-item>
@@ -75,15 +75,8 @@ import { useRouter } from 'vue-router'
    let collapsed = ref<boolean>(true);
 
    const router = useRouter();
-   const toBase = () => {
-       router.push('/base')
-   }
-   const toRef = () => {
-      router.push('/ref')  
-   }
-
-   const toToref = () => {
-       router.push('/toref')
+   const toPage = (page:string) => {
+       router.push('/' + page)
    }
 
    // console.log(router.options.routes)

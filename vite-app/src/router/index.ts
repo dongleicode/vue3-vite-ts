@@ -3,7 +3,7 @@ const RefIndex = () => import('@/view/ref/index.vue')
 const Base = () => import('@/view/base/index.vue')  
 const Home = () => import('@/App.vue')
 const Toref = () => import('@/view/ref/toRef.vue')
-
+const Computed = () => import('@/view/base/computed.vue') 
 const routes:Array<RouteRecordRaw> = [ 
     {
         path: '/',
@@ -14,6 +14,14 @@ const routes:Array<RouteRecordRaw> = [
         path: '/base',
         name: 'base',
         component: Base,
+        children: [
+
+        ]
+    },
+    {
+        path: '/computed',
+        name: 'computed',
+        component: Computed,
         children: [
 
         ]
