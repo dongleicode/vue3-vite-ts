@@ -41,6 +41,7 @@ declare module '@vue/runtime-core' {
     ToRef: typeof import('./src/view/ref/toRef.vue')['default']
     UploadOutlined: typeof import('@ant-design/icons-vue')['UploadOutlined']
     UserOutlined: typeof import('@ant-design/icons-vue')['UserOutlined']
+    Vdom: typeof import('./src/view/base/vdom.vue')['default']
     VideoCameraOutlined: typeof import('@ant-design/icons-vue')['VideoCameraOutlined']
   }
 }

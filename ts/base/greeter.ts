@@ -84,7 +84,7 @@ create("string"); // Error
 create(false); // Error
 create(undefined); // Error
 
-*/
+
 
 
 
@@ -95,6 +95,16 @@ declare function create(o: object | null): void;
 
 create({prop: 0})
 create(null)
+
+*/
+
+
+//设置返回类型为传递的实参——数据类型
+function foo<T extends any>(val:T):T{
+    return val
+}
+
+const res = foo(132)
 
 
 

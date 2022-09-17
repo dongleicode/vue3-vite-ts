@@ -4,6 +4,8 @@ const Base = () => import('@/view/base/index.vue')
 const Home = () => import('@/App.vue')
 const Toref = () => import('@/view/ref/toRef.vue')
 const Computed = () => import('@/view/base/computed.vue') 
+const Vdom = () => import('@/view/base/vdom.vue') 
+
 const routes:Array<RouteRecordRaw> = [ 
     {
         path: '/',
@@ -35,6 +37,11 @@ const routes:Array<RouteRecordRaw> = [
         path: '/toref',
         name: 'toref',
         component: Toref
+    },
+    {
+        path: '/vdom',
+        name: 'vdom',
+        component: Vdom
     }
 ]
 

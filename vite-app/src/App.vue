@@ -14,9 +14,9 @@
             <a-menu-item @click="toPage('toref')" key="3">toRef</a-menu-item>
             <a-menu-item @click="toPage('computed')" key="4">computed</a-menu-item>
          </a-sub-menu>
-         <a-menu-item @click="toPage('base')" key="8">
+         <a-menu-item @click="toPage('vdom')" key="8">
            <user-outlined />
-           <span>base</span>
+           <span>vdom</span>
          </a-menu-item>
          <a-menu-item @click="toPage('base')" key="7">
            <video-camera-outlined />
