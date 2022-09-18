@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>WeakMap</title>
+</head>
+<body>
+    <div id="active"></div>
+    <script>
+        //存储副作用函数的桶
+        const bucket = new WeakMap()
+
+        let activeEffect;
+        const data = {
+            text: 'active'
+        }
+        const obj = new Proxy(data, {
+            get(target, key){
+                //将副作用函数activeEffect添加到存储副作用函数的桶中
+                track(target, key)
+                //返回属性值
+                return target[key]
+            },
+            set(target, key, newVal){
+                //设置属性值
+                target[key] = newVal
+                //把副作用函数从桶里取出并执行
+                trigger(target, key)
+            }
+        })
+
+        function track(target, key){
+            //没有activeEffect, 直接return
+            if(!activeEffect) return
+            let depsMap = bucket.get(target)
+            if(!depsMap){
+                bucket.set(target, (depsMap = new Map()))
+            }
+
+            let deps = depsMap.get(key)
+            if(!deps){
+                depsMap.set(key, (deps = new Set()))
+            }
+
+            deps.add(activeEffect)
+        }
+
+        function trigger(target, key) {
+            const depsMap = bucket.get(target)
+            if(!depsMap){return}
+            const effects = depsMap.get(key)
+            effects && effects.forEach(fn => fn());
+        }
+
+         //副作用函数
+         function effect(fn) {
+            activeEffect = fn
+            fn()
+        }
+
+        effect(() => {
+            document.getElementById('active').innerText = obj.text
+        })
+
+        setTimeout(() => {
+            obj.text = 'newProp'
+        },2000)
+
+
+    </script>
+</body>
+</html>
