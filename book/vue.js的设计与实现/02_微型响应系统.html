@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>响应式</title>
+</head>
+<body>
+    <div id="active"></div>
+    <script>
+        //存储副作用函数的桶
+        const bucket = new Set()
+
+        //原始数据
+        const data = {text: 'hello world'}
+
+        //对原始数据的代理
+        const obj = new Proxy(data, {
+            //拦截读取操作
+            get(target, key){
+                //将副作用函数effect添加大存储副作用函数的桶中
+                bucket.add(effect)
+                return target[key]
+            },
+            //拦截设置操作
+            set(target, key, newVal){
+                //设置属性值
+                target[key] = newVal
+                //把副作用函数从桶里取出并执行
+                bucket.forEach(fn => fn())
+                //返回true代表设置操作成功
+                return true
+            }
+        })
+
+
+        //副作用函数
+        function effect() {
+          // effect 函数的执行会读取obj.text
+          document.getElementById('active').innerText = obj.text
+        }
+
+        //执行副作用函数，触发读取
+        effect()
+
+        setTimeout(() => {
+            obj.text = 'hello vue3'
+        }, 1000)
+    </script>
+</body>
+</html>
