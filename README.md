@@ -42,7 +42,17 @@ Vue Template Explorer 查看静态标记
 5.vue源码地址：https://github.com/vuejs/core
 
 霍春阳《vue3.js的设计与实现》
-第一篇：第2章
+第一篇：第1章
+    1、声明式： vue    性能：找出差异的性能消耗+直接修改的性能消耗
+       命令式：jquery  性能：直接修改的性能消耗
+
+       虚拟DOM存在的理由：找出差异的性能消耗最小化  diff算法消耗最小化
+
+    2、纯编译时：svelte ，直接将代码转化为js原生命令式代码
+       运行时+编译时：vue3  灵活性+性能
+    
+第一篇：第2章：框架设计的核心要素
+     热更新：hot module replacement (HMR)
     （1）开发环境:__DEV__  表示 true false
      (2) 生产环境：process.env.NODE_ENV !== 'production'
      (3)/*#__PURE__*/ 实现tree-shaking rollup和webpack都能识别

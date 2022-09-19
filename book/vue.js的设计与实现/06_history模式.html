@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang='en'>
+<head>
+<meta charset='UTF-8'>
+    <meta http-equiv='X-UA-Compatible' content='IE=edge'>
+    <meta name='viewport' content='width=device-width, initial-scale=1.0'>
+    <title>history模式</title>
+    <style>
+        section{
+            width: 300px;
+            margin: 0 auto;
+        }
+        article{
+            width: 300px;
+            height: 500px;
+            border: 1px solid black;
+        }
+        ol,li{
+            list-style: none;
+        }
+        ol{
+            display: flex;
+        }
+        ol li{
+            width:33%;
+        }
+        .hide{
+            display: none;
+        }
+        .show{
+            display: block;
+        }
+
+    </style>
+</head>
+<body>
+    <section>
+        <article id="home">
+            首页
+        </article>
+        <article class="hide" id="about">
+            about
+        </article>
+        <article class="hide" id="list">
+            list
+        </article>
+        <ol>
+            <li><a href="/">首页</a></li>
+            <li><a href="/about">about</a></li>
+            <li><a href="/list">list</a></li>
+        </ol>
+    </section>
+    <script>
+        const home = document.getElementById('home');
+        const about = document.getElementById('about');
+        const list = document.getElementById('list');
+        window.addEventListener('popstate', onPopState)
+        var linkList = document.querySelectorAll('ol a[href]')
+        linkList.forEach((item) => {
+            item.addEventListener('click', function (e) {
+                e.preventDefault()
+                history.replaceState(null, '', item.getAttribute('href'))
+                onPopState()
+            }, false)
+        })
+
+        function onPopState() {
+            console.log(location);
+            switch(location.pathname){
+                case '/':
+                    home.className = 'show'
+                    about.className = 'hide'
+                    list.className = 'hide'
+                    break;
+                case '/about':
+                    about.className = 'show'
+                    home.className = 'hide'
+                    list.className = 'hide'
+                    break;
+                case '/list':
+                    list.className = 'show'
+                    home.className = 'hide'
+                    about.className = 'hide'
+                    break;
+            }
+        }
+    </script>
+</body>
+</html>
