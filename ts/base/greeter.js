@@ -84,7 +84,31 @@ create("string"); // Error
 create(false); // Error
 create(undefined); // Error
 
-*/
+
+
+
+
 console.log('123');
-create({ prop: 0 });
-create(null);
+
+
+declare function create(o: object | null): void;
+
+create({prop: 0})
+create(null)
+
+
+
+
+//设置返回类型为传递的实参——数据类型
+function foo<T extends any>(val:T):T{
+    return val
+}
+
+const res = foo(132)
+
+*/
+function greeter(person) {
+    return 'hello,' + person;
+}
+var user = [1, 2];
+document.body.innerHTML = greeter(user);

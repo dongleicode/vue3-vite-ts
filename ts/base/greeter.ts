@@ -96,7 +96,7 @@ declare function create(o: object | null): void;
 create({prop: 0})
 create(null)
 
-*/
+
 
 
 //设置返回类型为传递的实参——数据类型
@@ -105,6 +105,17 @@ function foo<T extends any>(val:T):T{
 }
 
 const res = foo(132)
+
+*/
+
+
+function greeter(person: string) {
+    return 'hello,' + person
+}
+
+let user = [1,2]
+
+document.body.innerHTML = greeter(user)
 
 
 

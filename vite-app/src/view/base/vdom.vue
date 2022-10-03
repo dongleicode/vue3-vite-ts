@@ -6,7 +6,7 @@
         @back="() => router.push('/base')"
     />
     vdom:
-    {{Vdom}}
+    {{vdom2}}
     <div id="vdom"></div>
 </template>
 <script setup lang='ts'>
@@ -23,12 +23,7 @@
         }
     })
 
-    const vdom2 = defineComponent({
-        render() {
-            const props = { style: { color: "red" } };
-            return h("h2", props, "123456789");
-        },
-    });
+    const vdom2 = h("h2", {class: 'h2'}, "123456789");;
 
     
 

@@ -1,4 +1,13 @@
 <script setup lang="ts">
+import {getCurrentInstance} from 'vue'
+const { $myLoading } = getCurrentInstance().appContext.config.globalProperties
+console.log($myLoading);
+
+$myLoading.open()
+
+setTimeout(() => {
+   $myLoading.hide()
+},2000)
    //抛出组件name，路由路径，可不写
    //  defineOptions({
    //      name: 'base'

@@ -3,10 +3,14 @@
   "private": true,
   "version": "0.0.0",
   "type": "module",
+  
+
   "scripts": {
     "dev": "vite",
     "build": "vue-tsc --noEmit && vite build",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "build-load": "vue-cli-service build --target lib ./src/plugins/index.ts --dest oneloading-js --name index"
+
   },
   "dependencies": {
     "ant-design-vue": "^3.2.12",

@@ -34,8 +34,7 @@
         <a-table :dataSource="dataSource" :columns="columns" />
     </a-typography>
 </template>
-<script setup lang='ts'>
-    // import { ref, computed } from 'vue'
+<script setup lang='ts'> 
     import { computed, defineComponent, reactive, UnwrapRef } from 'vue';
 
     interface FormState {
