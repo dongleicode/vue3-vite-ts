@@ -9,6 +9,15 @@
 <body>
     <div id="active"></div>
     <script>
+        /**
+         * watch的两个特性：
+         * 一个是立即执行的回调函数，
+         * 另一个是回调函数的执行时机
+         * 
+         * 首先来看立即执行的回调函数。默认情况下，一个watch的回调只会在响应式数据发生变化时才执行。
+         * 在Vue.js 中可以通过选项参数immediate来指定回调是否需要立即执行
+         * 
+         */ 
         //存储副作用函数的桶
         const bucket = new WeakMap()
 
@@ -146,52 +155,105 @@
             })
         }
 
-        //在effectFn函数内部存在一个三元表达式，根据字段obj.ok值的不同会执行不同的代码分支。当字段obj.ok的值发生变化时，代码执行的分支会跟着变化，这就是所谓的分支切换
-        // effect(() => {
-        //     console.log(obj.foo);
+        /**
+         * watch的实现本质上就是利用了effect以及options.scheduler选项
+         * 01 effect(() => {
+            02   console.log(obj.foo)
+            03 }, {
+            04   scheduler() { watch的回调函数
+            05     // 当obj.foo的值变化时，会执行scheduler 调度函数
+            06   }
+            07 })
+         */ 
+        /**
+         * source是响应式数据
+         * cb是回调函数
+         */ 
+        function watch(source, cb, options = {}) {
+            let getter
+            if(typeof source === 'function'){
+                getter = source
+            }else{
+                getter = () => traverse(source)
+            }
+            let oldValue, newValue
+            let cleanup
+            function onInvalidate(fn) {
+                cleanup = fn
+            }
+            const job = () => {
+                newValue = effectFn()
+                if(cleanup){
+                    cleanup()
+                }
+                //当数据变化时，调用回调函数cb
+                cb(newValue, oldValue, onInvalidate)
+                oldValue = newValue
+            }
+            const effectFn = effect(
+            //触发操作，建立联系 
+            //调用traverse 递归地读取
+            ()=>getter(), 
+            {
+                lazy: true, 
+                scheduler: () => {
+                    if(options.flush === 'post'){
+                        const p = Promise.resolve()
+                        p.then(job)
+                    }else{
+                        job()
+                    }
+                }
+            })
+            if(options.immediate){
+                job()
+            }else{
+                oldValue = effectFn()
+            }
+        }
+
+        function traverse(value, seen = new Set()) {
+            //如果要读取的数据是原始值，或者已经被读取过了，那么什么都不做
+            if(typeof value !== 'object' || value === null || seen.has(value)) return
+            seen.add(value)
+            for(const k in value){
+                traverse(value[k], seen)
+            }
+            return value
+        }
+
+
+        // watch(obj, (newV, oldV) => {
+        //     console.log(newV, oldV);
+
+        //     console.log('变化了');
             
-        //     // obj.foo++ //等同于obj.foo=obj.foo+1 造成栈溢出Uncaught RangeError: Maximum call stack size exceeded
-        //     // document.getElementById('active').innerText = obj.ok ? obj.text : 'not'
         // }, {
-        //     scheduler(fn){
-        //         jobQueue.add(fn)
-        //         flushJob()
-        //     }
-        //     lazy: true
+        //     //回调函数会在watch 创建时立即执行一次
+        //     immediate: true
         // })
-        // obj.foo++ 
-        // obj.foo++ 
-        // console.log('结束了');
 
-        const effectFn = effect(() => {
-            return obj.foo + obj.bar
-        }, {
-            lazy: true
-        })
-
-        const value = effectFn()
-        // console.log(value);
-
-        const sumRes = computed(() => obj.foo + obj.bar)
-        // console.log(sumRes.value);
-        // console.log(sumRes.value);
-
-        effect(() => {
-            console.log(sumRes.value)
+        let finalData
+        watch(obj, async(newV, oldV, onInvalidate) => {
+            let expired = false;
+            onInvalidate(() => {
+                expired = true
+            })
+            const res = await fetch('https://smallpig.site/api/category/getCategory').then(res => res.json()).then(function(data){
+                return data
+            })
+            if(!expired){
+                console.log(res.data);
+                finalData = res.data
+            }
         })
         obj.foo++ 
-        console.log(sumRes.value);
 
+        setTimeout(() => {
+            obj.foo++
+        },2000)
+     
 
-        //在上面这段代码中，我们创建了一个集合set，它里面有一个元素数字1，接着我们调用forEach遍历该集合。在遍历过程中，首先调用delete(1)删除数字1，紧接着调用add(1)将数字1加回，最后打印'遍历中'。如果我们在浏览器中执行这段代码，就会发现它会无限执行下去。死循环
-        //语言规范中对此有明确的说明：在调用forEach遍历Set集合时，如果一个值已经被访问过了，但该值被删除并重新添加到集合，如果此时forEach遍历没有结束，那么该值会重新被访问。因此，上面的代码会无限执行
-        const set = new Set([1])
-        const newSet = new Set(set)
-        newSet.forEach(item => {
-            set.delete(1)
-            set.add(1)
-            // console.log('遍历中。。。');
-        })
 
 
 
