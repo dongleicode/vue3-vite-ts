@@ -1,0 +1,325 @@
+<!DOCTYPE html>
+<html lang='en'>
+<head>
+<meta charset='UTF-8'>
+    <meta http-equiv='X-UA-Compatible' content='IE=edge'>
+    <meta name='viewport' content='width=device-width, initial-scale=1.0'>
+    <title>遍历数组</title>
+    <style>
+
+    </style>
+</head>
+<body>
+    <script>
+        const bucket = new WeakMap()
+
+        let activeEffect;
+
+        const effectStack = [] //新增effect栈
+
+        //追踪和收集依赖
+        function track(target, key){
+            //没有activeEffect, 直接return
+            if(!activeEffect) return
+            let depsMap = bucket.get(target)
+            if(!depsMap){
+                bucket.set(target, (depsMap = new Map()))
+            }
+
+            let deps = depsMap.get(key)
+            if(!deps){
+                depsMap.set(key, (deps = new Set()))
+            }
+
+            deps.add(activeEffect)
+            activeEffect.deps.push(deps)
+        }
+
+        //触发副作用函数重新执行
+        function trigger(target, key, type, newV) {
+            const depsMap = bucket.get(target)
+            if(!depsMap){return}
+            const effects = depsMap.get(key)
+            const effectsToRun = new Set()
+            effects && effects.forEach(effectFn => {//避免无限递归
+                if(effectFn !== activeEffect){
+                    effectsToRun.add(effectFn)
+                }
+            })
+            
+            if(type === 'ADD' || type === 'DELETE'){
+                const iterateEffects = depsMap.get(ITERATE_KEY)
+                iterateEffects && iterateEffects.forEach(effectFn => {//避免无限递归
+                if(effectFn !== activeEffect){
+                    effectsToRun.add(effectFn)
+                }
+            })
+            }
+
+           //数组处理
+           if(type === 'ADD' && Array.isArray(target)){
+                const lengthEffects = depsMap.get('length')
+                lengthEffects && lengthEffects.forEach(effectFn => {
+                    if(effectFn !== activeEffect){
+                        effectsToRun.add(effectFn)
+                    }
+                })
+            }
+
+            if(Array.isArray(target) && key === 'length'){
+                depsMap.forEach((effects, key) => {
+                    if(key >= newV){
+                        effects.forEach(effectFn => {
+                            if(effectFn !== activeEffect){
+                                effectsToRun.add(effectFn)
+                            }
+                        })
+                    }
+                })
+            }
+
+            effectsToRun.forEach(effectFn => {
+                if(effectFn.options.scheduler){
+                    effectFn.options.scheduler(effectFn)
+                }else{
+                    effectFn()
+                }
+            })
+        }
+
+
+        //避免副作用函数产生遗留
+        function cleanup(effectFn) {
+                    for(let i = 0; i < effectFn.deps.length; i++){
+                const deps = effectFn.deps[i] 
+                deps.delete(effectFn)
+            }
+            effectFn.deps.length = 0
+        }
+
+        //用来注册副作用函数，同时它也允许指定一些选项参数options，例如指定scheduler调度器来控制副作用函数的执行时机和方式
+        function effect(fn, options = {}) {
+            const effectFn = () => {
+                cleanup(effectFn)
+                activeEffect = effectFn
+                //在调用副作用函数之前将当前副作用函数压入栈顶
+                //栈就是一个桶，后进先出，后进者在栈顶
+                effectStack.push(effectFn)  
+                const res = fn()
+                //在当前副作用函数执行完毕后，将当前副作用函数弹出栈，并把activeEffect 还原为之前的值
+                effectStack.pop() //删除数组最后一个元素，并返回该元素
+                activeEffect = effectStack[effectStack.length - 1]
+                return res
+            }
+            effectFn.options = options
+            effectFn.deps = []
+            if(!options.lazy){
+                effectFn()
+            }
+            return effectFn
+        }
+
+
+        const ITERATE_KEY = Symbol()
+        const reactiveMap = new Map()
+        function reactive(obj) { //深响应
+            const existProxy = reactiveMap.get(obj)
+            if(existProxy){return existProxy}
+            const proxy = createReactive(obj)
+            reactiveMap.set(obj, proxy)
+            return proxy
+        }
+
+        function shallowReactive(obj){//浅响应
+            return createReactive(obj, true);
+        }
+
+        function readonly(obj){
+            return createReactive(obj, false, true);
+        }
+
+        function shallowReadonly(obj){
+            return createReactive(obj, true, true);
+        }
+
+        const arrayInstrumentations = {}
+        ;['includes', 'indexOf', 'lastIndexOf'].forEach(method => {
+            const originMethod = Array.prototype[method]
+            arrayInstrumentations[method] = function(...args){
+                let res = originMethod.apply(this, args)
+                if(res === false || res === -1){
+                    res = originMethod.apply(this.raw, args)
+                }
+                return res
+            }
+        })
+
+        function createReactive(obj, isShallow = false, isReadonly = false) {
+            return new Proxy(obj, {
+                get(target, key, receiver){
+                    // console.log('get:', key);
+                    if(key === 'raw'){
+                        return target
+                    }
+
+                    if(Array.isArray(target) && arrayInstrumentations.hasOwnProperty(key)){
+                        return Reflect.get(arrayInstrumentations, key, receiver)
+                    }
+
+                    if(!isReadonly && typeof key !== 'symbol'){
+                        track(target, key)
+                    }
+                    const res = Reflect.get(target, key, receiver)
+                    if(isShallow){
+                        return res
+                    }
+                    if(typeof res === 'object' && res !== null){//深响应
+                        return isReadonly ? readonly(res) : reactive(res)
+                    }
+                    return res
+                    
+                },
+                set(target, key, newV, receiver){
+                    if(isReadonly){
+                        console.warn(`属性${key}是只读的`)
+                        return true
+                    }
+                    // target 是原始对象 proto
+                    // receiver 仍然是代理对象 child,不再是target的代理对象
+                    const oldV = target[key]
+                    const type = Array.isArray(target)
+                    ? Number(key) < target.length ? 'SET' : 'ADD'
+
+                    : Object.prototype.hasOwnProperty.call(target, key) ? 'SET' : 'ADD'
+                    const res = Reflect.set(target, key, newV, receiver)
+                    if(target === receiver.raw){
+                    // 比较新值与旧值，只有当它们不全等，并且不都是NaN的时候才触发响应
+                        if(oldV !== newV && (oldV === oldV || newV === newV)){
+                            trigger(target, key, type, newV)
+                        }
+                    }
+                    
+                    return res
+                },
+                deleteProperty(target, key){
+                    if(isReadonly){
+                        console.warn(`属性${key}是只读的`)
+                        return true
+                    }
+                    const hadKey = Object.prototype.hasOwnProperty.call(target, key)
+                    const res = Reflect.deleteProperty(target, key)
+                    if(res && hadKey){
+                        trigger(target, key, 'DELETE')
+                    }
+                    return res
+                },
+                has(target, key){
+                    track(target, key)
+                    return Reflect.has(target, key)
+                },
+                ownKeys(target){
+                    track(target, Array.isArray(target) ? 'length' : ITERATE_KEY)
+                    // trigger(target, ITERATE_KEY)
+                    return Reflect.ownKeys(target)
+                }
+            })
+        }
+
+        // const arr = reactive(['foo'])
+        // effect(() => {
+        //     // console.log(arr[0]);
+            
+        //    for(const key in arr){
+        //     console.log(key);//0
+        //    }
+        // })
+        // arr[100] = 'bar' //能触发响应
+        // arr.length = 0
+
+
+        // const obj = {
+        //     val: 0,
+        //     [Symbol.iterator](){
+        //         return {
+        //             next(){
+        //                 return {
+        //                     value: obj.val++,
+        //                     done: obj.val > 10 ? true : false
+        //                 }
+        //             }
+        //         }
+        //     }
+        // }
+
+        // for(const value of obj){
+        //     console.log(value);// 0, 1, 2, 3, 4, 5, 6, 7, 8, 9
+        // }
+        // const arr = [1, 2, 3, 4, 5]
+        // const itr = arr[Symbol.iterator]()
+
+        // console.log(itr.next())  //value: 1, done: false}
+        // console.log(itr.next()) //{value: 2, done: false}
+        // console.log(itr.next()) //{value: 3, done: false}
+        // console.log(itr.next()) //{value: 4, done: false}
+        // console.log(itr.next()) //{value: 5, done: false}
+        // console.log(itr.next()) //{value: undefined, done: true}
+
+
+        // for(const val of arr){
+        //     console.log(val);// 1, 2, 3, 4, 5
+        // }
+        // arr[Symbol.iterator] = function () {
+        //     const target = this
+        //     const len = target.length
+        //     let index = 0
+        //     return{
+        //         next(){
+        //             return{
+        //                 value: index < len ? target[index] : undefined,
+        //                 done: index++ >= len
+        //             }
+        //         }
+        //     }
+        // }
+
+
+        const arr = reactive([1, 2, 3, 4, 5])
+
+        // effect(() => {
+        //     for(const val of arr){
+        //         console.log(val); // 1, 2, 3, 4, 5
+        //     }
+        // })
+
+        // arr[1] = 'bar' // 1, 'bar', 3, 4, 5
+        // arr.length = 0 //Cannot convert a Symbol value to a number
+
+
+
+        /**
+         * 数组的values方法的返回值实际上就是数组内建的迭代器，我们可以验证这一点：
+         * console.log(Array.prototype.values === Array.prototype[Symbol.iterator]);
+         */ 
+        console.log(Array.prototype.values === Array.prototype[Symbol.iterator]); //true
+        
+        effect(() => {
+            //无论是使用for...of循环，还是调用values等方法，它们都会读取数组的Symbol.iterator属性
+            // for(const val of arr.values()){
+            //     console.log(val); // 1, 2, 3, 4, 5
+            // }
+            // console.log(arr.includes(1)); //true
+            
+        })
+            // arr[0] = 3  
+            // arr.length = 0
+
+
+        const obj = {}
+        const arr1 = reactive([obj])
+        console.log(arr1.includes(arr1[0])); //true
+        console.log(arr1.includes(obj)); //true
+
+
+    </script>
+</body>
+</html>

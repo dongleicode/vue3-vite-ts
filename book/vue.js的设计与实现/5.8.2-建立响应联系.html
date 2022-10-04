@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html lang='en'>
+<head>
+<meta charset='UTF-8'>
+    <meta http-equiv='X-UA-Compatible' content='IE=edge'>
+    <meta name='viewport' content='width=device-width, initial-scale=1.0'>
+    <title>建立响应联系</title>
+    <style>
+
+    </style>
+</head>
+<body>
+    <script src="js/common.js"></script>
+    <script>
+    
+        const s = new Set([1, 2, 3])
+        const p = new Proxy(s, {
+            get(target, key, receiver){
+                if(key === 'size'){
+                    return Reflect.get(target, key, target)
+                }
+                return target[key].bind(target) //需要把delete方法与原始数据对象绑定即可
+                // return Reflect.get(target, key, receiver)
+            },
+            deleteProperty(target, key){
+                return Reflect.deleteProperty(target, key)
+            }
+        })
+
+
+
+
+        const p2 = reactive(s)
+        effect(() => {
+            console.log(p2.size); //3
+        })
+        p2.delete(3)
+        // console.log(p2.size);
+
+    </script>
+</body>
+</html>

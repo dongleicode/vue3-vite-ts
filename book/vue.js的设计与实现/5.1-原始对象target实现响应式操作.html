@@ -1,0 +1,265 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>WeakMap</title>
+</head>
+<body>
+    <div id="active"></div>
+    <script>
+        /**
+         * watch的两个特性：
+         * 一个是立即执行的回调函数，
+         * 另一个是回调函数的执行时机
+         * 
+         * 首先来看立即执行的回调函数。默认情况下，一个watch的回调只会在响应式数据发生变化时才执行。
+         * 在Vue.js 中可以通过选项参数immediate来指定回调是否需要立即执行
+         * 
+         */ 
+        //存储副作用函数的桶
+        const bucket = new WeakMap()
+
+        let activeEffect;
+
+        const effectStack = [] //新增effect栈
+        const data = {
+            ok: false,
+            text: 'hello react',
+            foo: 1,
+            get bar(){ 
+                return this.foo
+            }
+            
+        }
+        const obj = new Proxy(data, {
+            get(target, key){
+                //将副作用函数activeEffect添加到存储副作用函数的桶中
+                track(target, key)
+                //返回属性值
+                return target[key]
+            },
+            set(target, key, newVal){
+                //设置属性值
+                target[key] = newVal
+                //把副作用函数从桶里取出并执行
+                trigger(target, key)
+            }
+        })
+
+        //追踪和收集依赖
+        function track(target, key){
+            //没有activeEffect, 直接return
+            if(!activeEffect) return
+            let depsMap = bucket.get(target)
+            if(!depsMap){
+                bucket.set(target, (depsMap = new Map()))
+            }
+
+            let deps = depsMap.get(key)
+            if(!deps){
+                depsMap.set(key, (deps = new Set()))
+            }
+
+            deps.add(activeEffect)
+            activeEffect.deps.push(deps)
+        }
+
+        //触发副作用函数重新执行
+        function trigger(target, key) {
+            const depsMap = bucket.get(target)
+            if(!depsMap){return}
+            const effects = depsMap.get(key)
+            const effectsToRun = new Set()
+            effects && effects.forEach(effectFn => {//避免无限递归
+                if(effectFn !== activeEffect){
+                    effectsToRun.add(effectFn)
+                }
+            })
+            effectsToRun.forEach(effectFn => {
+                if(effectFn.options.scheduler){
+                    effectFn.options.scheduler(effectFn)
+                }else{
+                    effectFn()
+                }
+            })
+        }
+
+        //避免副作用函数产生遗留
+        function cleanup(effectFn) {
+            for(let i = 0; i < effectFn.deps.length; i++){
+                const deps = effectFn.deps[i] 
+                deps.delete(effectFn)
+            }
+            effectFn.deps.length = 0
+        }
+
+         //用来注册副作用函数，同时它也允许指定一些选项参数options，例如指定scheduler调度器来控制副作用函数的执行时机和方式
+         function effect(fn, options = {}) {
+            const effectFn = () => {
+                cleanup(effectFn)
+                activeEffect = effectFn
+                //在调用副作用函数之前将当前副作用函数压入栈顶
+                //栈就是一个桶，后进先出，后进者在栈顶
+                effectStack.push(effectFn)  
+                const res = fn()
+                //在当前副作用函数执行完毕后，将当前副作用函数弹出栈，并把activeEffect 还原为之前的值
+                effectStack.pop() //删除数组最后一个元素，并返回该元素
+                activeEffect = effectStack[effectStack.length - 1]
+                return res
+            }
+            effectFn.options = options
+            effectFn.deps = []
+            if(!options.lazy){
+                effectFn()
+            }
+            return effectFn
+        }
+
+
+        function computed(getter) {
+            let value 
+            let dirty = true  //‘脏’值，需要
+            const effectFn = effect(getter, {
+                lazy: true,
+                scheduler(){
+                    if(!dirty){
+                        dirty = true
+                        trigger(obj, 'value')
+                    }
+                }
+            })
+            const obj = {
+                get value(){
+                    if(dirty){
+                        value = effectFn()
+                        dirty = false
+                    }
+                    track(obj, 'value')
+                    return value
+                }
+            }
+            return obj
+        }
+
+
+        //调度器：这个功能有点类似于在Vue.js 中连续多次修改响应式数据但只会触发一次更新，实际上 Vue.js 内部实现了一个更加完善的调度器，思路如下
+        const jobQueue = new Set() //去重
+        const p = Promise.resolve()
+        let isFlushing = false
+        function flushJob() {
+            if(isFlushing) return 
+            isFlushing = true
+            p.then(() => {//在flushJob内通过p.then将一个函数添加到微任务队列，在微任务队列内完成对jobQueue的遍历执行
+                jobQueue.forEach(job => job())
+            }).finally(() => {
+                isFlushing = false
+            })
+        }
+
+        function watch(source, cb, options = {}) {
+            let getter
+            if(typeof source === 'function'){
+                getter = source
+            }else{
+                getter = () => traverse(source)
+            }
+            let oldValue, newValue
+            let cleanup
+            function onInvalidate(fn) {
+                cleanup = fn
+            }
+            const job = () => {
+                newValue = effectFn()
+                if(cleanup){
+                    cleanup()
+                }
+                //当数据变化时，调用回调函数cb
+                cb(newValue, oldValue, onInvalidate)
+                oldValue = newValue
+            }
+            const effectFn = effect(
+            //触发操作，建立联系 
+            //调用traverse 递归地读取
+            ()=>getter(), 
+            {
+                lazy: true, 
+                scheduler: () => {
+                    if(options.flush === 'post'){
+                        const p = Promise.resolve()
+                        p.then(job)
+                    }else{
+                        job()
+                    }
+                }
+            })
+            if(options.immediate){
+                job()
+            }else{
+                oldValue = effectFn()
+            }
+        }
+
+        function traverse(value, seen = new Set()) {
+            //如果要读取的数据是原始值，或者已经被读取过了，那么什么都不做
+            if(typeof value !== 'object' || value === null || seen.has(value)) return
+            seen.add(value)
+            for(const k in value){
+                traverse(value[k], seen)
+            }
+            return value
+        }
+
+
+        // let finalData
+        // watch(obj, async(newV, oldV, onInvalidate) => {
+        //     let expired = false;
+        //     onInvalidate(() => {
+        //         expired = true
+        //     })
+        //     const res = await fetch('https://smallpig.site/api/category/getCategory').then(res => res.json()).then(function(data){
+        //         return data
+        //     })
+        //     if(!expired){
+        //         console.log(res.data);
+        //         finalData = res.data
+        //     }
+        // })
+
+
+
+        const obj1 = {
+            foo: 1,
+            get bar(){
+                //this指向的是原始对象obj1
+                return this.foo
+            }
+        }
+        const p1 = new Proxy(obj, {
+            get(target, key){
+                track(target, key)
+                return target[key]
+            },
+            set(target, key, newV){
+                target[key] = newV
+                trigger(target, key)
+            }
+        })
+
+        effect(() => {
+            // console.log(p1.bar)//1
+            obj1.foo
+        })
+
+        p1.foo++
+      
+        
+
+
+
+
+
+    </script>
+</body>
+</html>

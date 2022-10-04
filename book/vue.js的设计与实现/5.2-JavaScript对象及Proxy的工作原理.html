@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html lang='en'>
+<head>
+<meta charset='UTF-8'>
+    <meta http-equiv='X-UA-Compatible' content='IE=edge'>
+    <meta name='viewport' content='width=device-width, initial-scale=1.0'>
+    <title>js对象和Proxy工作原理</title>
+    <style>
+
+    </style>
+</head>
+<body>
+    <script>
+        /**
+         * “JavaScript 中一切皆对象。”
+         * 到底什么是对象呢？
+         * 根据 ECMAScript 规范，在JavaScript 中有两种对象，其中一种叫作常规对象（ordinary object），另一种叫作异质对象（exotic object）。
+         * 这两种对象包含了JavaScript 世界中的所有对象，任何不属于常规对象的对象都是异质对象。
+         * 在JavaScript 中，对象的实际语义是由对象的内部方法（internal method）指定的。所谓内部方法，指的是当我们对一个对象进行操作时在引擎内部调用的方法，这些方法对于JavaScript 使用者来说是不可见的。
+         * 引擎内部会调用[[Get]]这个内部方法来读取属性值。这里补充说明一下，在ECMAScript 规范中使用[[xxx]]来代表内部方法或内部槽。当然，一个对象不仅部署了[[Get]]这个内部方法。
+         * 
+         * 11个必要的内部方法
+         * [[GetPrototypeOf]]
+         * [[SetPrototypeOf]]
+         * [[IsExtensible]]
+         * [[PreventExtensions]]
+         * [[GetOwnProperty]]
+         * [[DefineOwnProperty]]
+         * [[HasProperty]]
+         * [[Get]]
+         * [[Set]]
+         * [[Delete]]
+         * [[OwnPropertyKeys]]
+         * 
+         * 包括[[Get]]在内，一个对象必须部署 11 个必要的内部方法。
+         * 
+         * 额外的必要内部方法:2个
+         * [[Call]]
+         * [[Construct]]
+         * 
+         * 如果一个对象需要作为函数调用，那么这个对象就必须部署内部方法[[Call]]。
+         * 
+         * 如何区分一个对象是普通对象还是函数呢？一个对象在什么情况下才能作为函数调用呢？
+         * 答案是，通过内部方法和内部槽来区分对象，例如函数对象会部署内部方法[[Call]]，而普通对象则不会。
+         * 满足以下三点要求的对象就是常规对象：
+            ·对于表5-1 列出的内部方法，必须使用ECMA 规范 10.1.x 节给出的定义实现；
+            ·对于内部方法[[Call]]，必须使用ECMA 规范 10.2.1 节给出的定义实现；
+            ·对于内部方法[[Construct]]，必须使用ECMA 规范 10.2.2 节给出的定义实现。
+          而所有不符合这三点要求的对象都是异质对象。例如，由于Proxy对象的内部方法[[Get]]没有使用ECMA 规范的10.1.8 节给出的定义实现，所以Proxy是一个异质对象。
+         * 
+          创建代理对象时指定的拦截函数，实际上是用来自定义代理对象本身的内部方法和行为的，而不是用来指定被代理对象的内部方法和行为的。
+
+          内部方法                           处理器函数
+         [[GetPrototypeOf]]                 getPrototypeOf
+         [[SetPrototypeOf]]                 setPrototypeOf
+         [[IsExtensible]]                   isExtensible
+         [[PreventExtensions]]              preventExtensions
+         [[GetOwnProperty]]                 getOwnPropertyDescriptor
+         [[DefineOwnProperty]]              defineOwnProperty
+         [[HasProperty]]                    has
+         [[Get]]                            get
+         [[Set]]                            set
+         [[Delete]]                         deleteProperty
+         [[OwnPropertyKeys]]                ownKeys
+         [[Call]]                           apply
+         [[Construct]]                      construct
+
+
+
+         */ 
+
+
+
+         const obj = {foo:1}
+         //deleteProperty实现的是代理对象p的内部方法和行为，所以为了删除被代理对象上的属性值，我们需要使用Reflect.deleteProperty(target, key)来完成。
+         const p = new Proxy(obj, {
+            deleteProperty(target, key){
+                return Reflect.defineProperty(target, key)
+            }
+         })
+
+         console.log(p.foo);
+        //  delete p.foo
+        
+         console.log(p); //target is not defined
+         
+
+
+
+    </script>
+</body>
+</html>

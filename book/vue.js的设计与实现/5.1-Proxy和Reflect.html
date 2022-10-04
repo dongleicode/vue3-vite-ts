@@ -1,0 +1,182 @@
+<!DOCTYPE html>
+<html lang='en'>
+<head>
+<meta charset='UTF-8'>
+    <meta http-equiv='X-UA-Compatible' content='IE=edge'>
+    <meta name='viewport' content='width=device-width, initial-scale=1.0'>
+    <title>Proxy和Reflect</title>
+    <style>
+
+    </style>
+</head>
+<body>
+    <script>
+        /**
+         * 什么是proxy? 使用Proxy可以创建一个代理对象
+         * 它能够实现对其他对象的代理，这里的关键词是其他对象，也就是说，Proxy只能代理对象，无法代理非对象值，例如字符串、布尔值等。那么，代理指的是什么呢？所谓代理，指的是对一个对象基本语义的代理。它允许我们拦截并重新定义对一个对象的基本操作。这句话的关键词比较多，我们逐一解释。
+         * 
+         * 在JavaScript的世界里，万物皆对象。例如一个函数也是一个对象，所以调用函数也是对一个对象的基本操作：
+         * 01 const fn = (name) => {
+            02   console.log('我是：', name)
+            03 }
+            04
+            05 // 调用函数是对对象的基本操作
+            06 fn()
+        
+
+         Reflect下的方法与Proxy的拦截器方法名字相同，其实这不是偶然。任何在Proxy的拦截器中能够找到的方法，都能够在Reflect中找到同名函数，那么这些函数的作用是什么呢？
+         Reflect.get函数来说，它的功能就是提供了访问一个对象属性的默认行为。
+        01 const obj = { foo: 1 }
+        02
+        03 // 直接读取
+        04 console.log(obj.foo) // 1
+        05 // 使用Reflect.get 读取
+        06 console.log(Reflect.get(obj, 'foo')) // 1
+        可能有的读者会产生疑问：既然操作等价，那么它存在的意义是什么呢？
+        实际上Reflect.get函数还能接收第三个参数，即指定接收者receiver，你可以把它理解为函数调用过程中的this，例如：
+        01 const obj = { foo: 1 }
+        02 console.log(Reflect.get(obj, 'foo', { foo: 2 }))  // 输出的是2 而不是1
+
+         */ 
+
+
+         const fn = (name) => {
+             console.log('我是：', name)
+         }
+
+         //因此，我们可以用Proxy来拦截函数的调用操作，这里我们使用apply拦截函数的调用：
+         const p2 = new Proxy(fn, {
+            apply(target, thisArg, argArray){
+                target.call(thisArg, ...argArray)
+            }
+         })
+         p2('hcy') //我是： hcy
+
+        //  console.log(Reflect);
+        //  console.log(p2);
+
+         const obj2 = {foo: 1, bar: 456}
+        //  直接读取
+        //  console.log(obj2.foo); //1
+        //  使用Reflect读取
+         console.log(Reflect.get(obj2, 'foo')); //1
+         //使用Reflect设置新值
+         Reflect.set(obj2, 'foo', { foo: 123 })
+        //  console.log(Reflect.set(obj2, 'foo', { foo: 123 }))
+         console.log(obj2.foo) //123
+
+        const bucket = new WeakMap()
+
+        let activeEffect;
+
+        const effectStack = [] //新增effect栈
+
+         //追踪和收集依赖
+        function track(target, key){
+            //没有activeEffect, 直接return
+            if(!activeEffect) return
+            let depsMap = bucket.get(target)
+            if(!depsMap){
+                bucket.set(target, (depsMap = new Map()))
+            }
+
+            let deps = depsMap.get(key)
+            if(!deps){
+                depsMap.set(key, (deps = new Set()))
+            }
+
+            deps.add(activeEffect)
+            activeEffect.deps.push(deps)
+        }
+
+        //触发副作用函数重新执行
+        function trigger(target, key) {
+            const depsMap = bucket.get(target)
+            if(!depsMap){return}
+            const effects = depsMap.get(key)
+            const effectsToRun = new Set()
+            effects && effects.forEach(effectFn => {//避免无限递归
+                if(effectFn !== activeEffect){
+                    effectsToRun.add(effectFn)
+                }
+            })
+            effectsToRun.forEach(effectFn => {
+                if(effectFn.options.scheduler){
+                    effectFn.options.scheduler(effectFn)
+                }else{
+                    effectFn()
+                }
+            })
+        }
+
+
+        //避免副作用函数产生遗留
+        function cleanup(effectFn) {
+                    for(let i = 0; i < effectFn.deps.length; i++){
+                const deps = effectFn.deps[i] 
+                deps.delete(effectFn)
+            }
+            effectFn.deps.length = 0
+        }
+
+        //用来注册副作用函数，同时它也允许指定一些选项参数options，例如指定scheduler调度器来控制副作用函数的执行时机和方式
+        function effect(fn, options = {}) {
+            const effectFn = () => {
+                cleanup(effectFn)
+                activeEffect = effectFn
+                //在调用副作用函数之前将当前副作用函数压入栈顶
+                //栈就是一个桶，后进先出，后进者在栈顶
+                effectStack.push(effectFn)  
+                const res = fn()
+                //在当前副作用函数执行完毕后，将当前副作用函数弹出栈，并把activeEffect 还原为之前的值
+                effectStack.pop() //删除数组最后一个元素，并返回该元素
+                activeEffect = effectStack[effectStack.length - 1]
+                return res
+            }
+            effectFn.options = options
+            effectFn.deps = []
+            if(!options.lazy){
+                effectFn()
+            }
+            return effectFn
+        }
+
+
+          const obj = {
+            foo: 1,
+            get bar(){
+                //this指向的是原始对象obj
+                return this.foo
+            }
+        }
+        const p = new Proxy(obj, {
+            get(target, key, receiver){
+                track(target, key)
+                //Reflect.get(target, key, receiver)代替之前的target[key]，这里的关键点就是第三个参数receiver。我们已经知道它就是代理对象p，所以访问器属性bar的getter函数内的this指向代理对象p：
+                return Reflect.get(target, key, receiver)
+                //this由原始对象obj变成了代理对象p。很显然，这会在副作用函数与响应式数据之间建立响应联系，从而达到依赖收集的效果。如果此时再对p.foo进行自增操作，会发现已经能够触发副作用函数重新执行了
+            },
+            set(target, key, newV){
+                target[key] = newV
+                trigger(target, key)
+            }
+        })
+
+        // effect(() => {
+        //     console.log(p.bar)//1
+        //     // obj.foo
+        // })
+
+        // p.foo++
+        // p.foo++
+
+        
+
+
+
+
+
+
+    </script>
+</body>
+</html>
