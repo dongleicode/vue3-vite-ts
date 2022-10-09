@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html lang='en'>
+<head>
+<meta charset='UTF-8'>
+    <meta http-equiv='X-UA-Compatible' content='IE=edge'>
+    <meta name='viewport' content='width=device-width, initial-scale=1.0'>
+    <title>正确地设置元素属性</title>
+    <style>
+
+    </style>
+</head>
+<body>
+    <div id="app"></div>
+    <script>
+        
+        function shouldSetAsProps(el, key, value){
+            if(key === 'form' && el.tagName === 'INPUT') return false
+            return key in el
+        }
+
+        // 在创建renderer 时传入配置项
+        const renderer = createRenderer({
+            // 用于创建元素
+            createElement(tag){
+                return document.createElement(tag)
+            },
+            // 用于设置元素的文本节点
+            setElementText(el, text){
+                el.textContent = text
+            },
+            insert(el, parent, anchor = null){
+                parent.insertBefore(el, anchor)
+            },
+            // 将属性设置相关操作封装到patchProps 函数中，并作为渲染器选项传递
+            patchProps(el, key, prevValue, nextValue){
+                if(shouldSetAsProps(el, key, nextValue)){
+                    const type = typeof el[key]
+                    if(type === 'boolean' && nextValue === ''){
+                        el[key] = true
+                    }else{
+                        el[key] = nextValue
+                    }
+                }else{
+                    el.setAttribute(key, nextValue)
+                }
+            }
+        })
+
+
+        function createRenderer(options){
+            //通过options得到操作DOM的API
+            const {
+                createElement,
+                insert,
+                setElementText,
+                patchProps
+            } = options
+
+            function patch(n1, n2, container){
+                if(!n1){
+                    mountElement(n2, container)
+                }else{
+
+                }
+            }
+
+            function shouldSetAsProps(el, key, value){
+                if(key === 'form' && el.tagName === 'INPUT') return false
+                return key in el
+            }
+
+            function mountElement(vnode, container){
+                const el = createElement(vnode.type)
+
+                //处理children
+                if(typeof vnode.children === 'string'){
+                    setElementText(el, vnode.children)
+                }else if(Array.isArray(vnode.children)){
+                    vnode.children.forEach(child => {
+                        patch(null, child, el)
+                    })
+                }
+
+                //根据vnode.props处理el的属性
+                if(vnode.props){
+                    for(const key in vnode.props){
+                        const value = vnode.props[key]
+                        patchProps(el, key, null, value)
+                    }
+                }
+
+                insert(el, container)
+            }
+
+            function render(vnode, container){
+                if(vnode){
+                    patch(container._vnode, vnode, container)
+                }else{
+                    if(container._vnode){
+                        container.innerHTML = ''
+                    }
+                }
+                container._vnode = vnode
+            }
+            
+            return {
+                render
+            }
+        }
+
+
+        const button = {
+            type: 'button',
+            props: {
+                disabled: false
+            },
+            children: '禁用'
+        }
+        
+        
+
+        renderer.render(button, document.querySelector('#app'))
+
+    </script>
+</body>
+</html>

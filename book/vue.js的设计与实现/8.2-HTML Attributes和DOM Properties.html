@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang='en'>
+<head>
+<meta charset='UTF-8'>
+    <meta http-equiv='X-UA-Compatible' content='IE=edge'>
+    <meta name='viewport' content='width=device-width, initial-scale=1.0'>
+    <title>HTML Attributes 和 DOM properties</title>
+    <script src="https://unpkg.com/@vue/reactivity@3.0.5/dist/reactivity.global.js"></script>
+    <style>
+        .red{
+            color: red;
+        }
+    </style>
+</head>
+<body>
+    <input id="my-input" type="foo" value="foo" />
+    <div id="app"></div>
+    <script>
+
+        /**  
+         * HTML Attributes 指的就是定义在HTML 标签上的属性，这里指的就是id="my-input"、type="text"和value="foo"。当浏览器解析这段HTML 代码后，会创建一个与之相符的DOM元素对象，我们可以通过JavaScript 代码来读取该 DOM对象：
+         * 
+         * 01 const el = document.querySelector('#my-input')
+         * 
+         * 这个DOM对象会包含很多属性（properties），如图8-1 所示。
+         * 
+         * 这些属性就是所谓的DOM Properties。很多 HTML Attributes 在DOM对象上有与之同名的DOM Properties，例如id="my-input"对应el.id，type="text"对应el.type，value="foo"对应el.value等。但 DOM Properties 与HTML Attributes的名字不总是一模一样的，例如：
+         * 
+         * 01 <div class="foo"></div>
+         * 
+         * class="foo"对应的DOM Properties 则是el.className。
+         * 另外，并不是所有HTML Attributes 都有与之对应的DOM Properties，例如：
+         * 
+         * 01 <div aria-valuenow="75"></div>
+         * 
+         * aria-*类的HTML Attributes 就没有与之对应的DOM Properties。
+         * 类似地，也不是所有DOM Properties 都有与之对应的HTML Attributes，例如可以用el.textContent来设置元素的文本内容，但并没有与之对应的HTML Attributes 来完成同样的工作。
+         * 
+         * 
+         * 可以发现，用户对文本框内容的修改并不会影响el.getAttribute('value')的返回值，这个现象蕴含着 HTML Attributes 所代表的意义。实际上，HTML Attributes的作用是设置与之对应的DOM Properties的初始值。一旦值改变，那么DOM Properties 始终存储着当前值，而通过getAttribute函数得到的仍然是初始值。
+         但我们仍然可以通过el.defaultValue来访问初始值，如下面的代码所示：
+            01 el.getAttribute('value') // 仍然是'foo'
+            02 el.value // 'bar'
+            03 el.defaultValue // 'foo'
+
+          虽然我们可以认为HTML Attributes 是用来设置与之对应的DOM Properties的初始值的，但有些值是受限制的，就好像浏览器内部做了默认值校验。如果你通过HTML Attributes 提供的默认值不合法，那么浏览器会使用内建的合法值作为对应 DOM Properties的默认值，例如：
+
+          01 <input type="foo" />
+
+          我们知道，为<input/>标签的type属性指定字符串'foo'是不合法的，因此浏览器会矫正这个不合法的值。所以当我们尝试读取el.type时，得到的其实是矫正后的值，即字符串'text'，而非字符串'foo'：
+
+          01 console.log(el.type) // 'text'
+
+          从上述分析来看，HTML Attributes 与DOM Properties 之间的关系很复杂，但其实我们只需要记住一个核心原则即可：
+          HTML Attributes的作用是设置与之对应的DOM Properties的初始值。
+
+         * 
+        */
+
+        
+        const el = document.querySelector('#my-input')
+
+        console.log(el.type); //text
+
+        // console.log(el.getAttribute('value')); 
+
+
+    </script>
+</body>
+</html>

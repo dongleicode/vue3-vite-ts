@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html lang='en'>
+<head>
+<meta charset='UTF-8'>
+    <meta http-equiv='X-UA-Compatible' content='IE=edge'>
+    <meta name='viewport' content='width=device-width, initial-scale=1.0'>
+    <title>挂载子节点和元素的属性</title>
+    <script src="https://unpkg.com/@vue/reactivity@3.0.5/dist/reactivity.global.js"></script>
+    <style>
+        .red{
+            color: red;
+        }
+    </style>
+</head>
+<body>
+    <div id="app"></div>
+    <script>
+        // 在创建renderer 时传入配置项
+        const renderer = createRenderer({
+            // 用于创建元素
+            createElement(tag){
+                return document.createElement(tag)
+            },
+            // 用于设置元素的文本节点
+            setElementText(el, text){
+                el.textContent = text
+            },
+            insert(el, parent, anchor = null){
+                parent.insertBefore(el, anchor)
+            }
+        })
+
+
+        function createRenderer(options){
+            //通过options得到操作DOM的API
+            const {
+                createElement,
+                insert,
+                setElementText
+            } = options
+
+            function patch(n1, n2, container){
+                if(!n1){
+                    mountElement(n2, container)
+                }else{
+
+                }
+            }
+
+            function mountElement(vnode, container){
+                const el = createElement(vnode.type)
+
+                //处理children
+                if(typeof vnode.children === 'string'){
+                    setElementText(el, vnode.children)
+                }else if(Array.isArray(vnode.children)){
+                    vnode.children.forEach(child => {
+                        patch(null, child, el)
+                    })
+                }
+
+                //根据vnode.props处理el的属性
+                if(vnode.props){
+                    for(const key in vnode.props){
+                        //HTML Attributes和DOM Properties 都可以操作DOM
+                        el.setAttribute(key, vnode.props[key])
+                        // el[key] = vnode.props[key]
+                    }
+                }
+
+                insert(el, container)
+            }
+
+            function render(vnode, container){
+                if(vnode){
+                    patch(container._vnode, vnode, container)
+                }else{
+                    if(container._vnode){
+                        container.innerHTML = ''
+                    }
+                }
+                container._vnode = vnode
+            }
+            
+            return {
+                render
+            }
+        }
+
+
+        const vNode = {
+            type: 'div',
+            //使用props描述一个元素的属性
+            props: {
+                id: 'foo',
+                class: 'red'
+            },
+            children: [
+                {
+                    type: 'p', 
+                    children: 'p'
+                },
+                {
+                    type: 'h1', 
+                    children: 'h1'
+                }
+            ]
+        }
+
+        renderer.render(vNode, document.querySelector('#app'))
+
+
+
+    </script>
+</body>
+</html>

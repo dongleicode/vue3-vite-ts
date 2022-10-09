@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang='en'>
+<head>
+<meta charset='UTF-8'>
+    <meta http-equiv='X-UA-Compatible' content='IE=edge'>
+    <meta name='viewport' content='width=device-width, initial-scale=1.0'>
+    <title>渲染器与响应系统的结合</title>
+    <style>
+
+    </style>
+</head>
+<body>
+    <div id="app"></div>
+
+    <script src="https://unpkg.com/@vue/reactivity@3.0.5/dist/reactivity.global.js"></script>
+    <!-- <script src="js/common.js"></script> -->
+    <script>
+        //dom渲染器
+        // function render(domString, container){
+        //     container.innerHTML = domString
+        // }
+        // let count = ref(1)
+        // effect(() => {
+        //     let str = `<h1>${count.value}</h1>`
+        //     render(str, document.getElementById('app'))
+        // })
+        // count.value++ //2
+        // count.value++ //3
+
+        const {effect, ref} = VueReactivity
+        function renderer(domString, container){
+            container.innerHTML = domString
+        }
+
+        const count = ref(1)
+        effect(() => {
+            renderer(`<h1>${count.value}</h1>`, document.getElementById('app'))
+        })
+        count.value++ //2
+        count.value++ //3
+
+        
+    </script>
+</body>
+</html>
