@@ -24,6 +24,6 @@ export default {
 
 <style scoped>
 .over{
-  color: #222;
+  color: yellowgreen;
 }
 </style>

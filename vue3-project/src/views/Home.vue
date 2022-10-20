@@ -1,5 +1,6 @@
 <template>
   <div class="home">
+    <Banner/>
     <div>定时器；{{count}}</div>
     <div>{{age}}----{{n1}}----{{n2}}---{{type}}---{{num}}</div>
     <button @click="change()">change</button>
@@ -16,8 +17,12 @@
 </template>
 
 <script>
-  import { reactive, onMounted, toRefs, computed, watch, onUpdated, onUnmounted} from 'vue';
+  import Banner from '../components/Banner.vue'
+  import { reactive, onMounted, toRefs, computed, watch, onUpdated, onUnmounted, provide} from 'vue';
   export default{
+    components:{
+      Banner
+    },
     name: 'home',
     // props: {
     //   item: 'Bill'
@@ -35,8 +40,14 @@
         n2: computed(function(){
             return state.id + 2
         }), 
-        num: 0
+        num: 0,
+        list: [
+          require('../assets/img/1.jpg'),
+          require('../assets/img/2.jpg')
+        ]
       })
+
+      provide('list', state.list)
       
       // onMounted(() => {
       //     setInterval(() => {
