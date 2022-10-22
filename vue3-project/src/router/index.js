@@ -1,13 +1,16 @@
 import { createRouter, createWebHashHistory } from 'vue-router'
-import HomeView from '../views/Home.vue'
 import bottomNavMap from '../api/bottomNavData'
 
 const routes = [
   {
     path: '/',
-    name: 'home',
-    component: HomeView
+    redirect: 'home' //重定向
   },
+  {
+    path: '/details',
+    name: 'details',
+    component: () => import('../views/Details')
+  }
 ]
 
 bottomNavMap.forEach((item, i)=>{
@@ -15,10 +18,8 @@ bottomNavMap.forEach((item, i)=>{
     path: item.path,
     name: item.name,
     component: () => import('../views/'+item.component)
-
   })
 })
-
 
 const router = createRouter({
   history: createWebHashHistory(),
