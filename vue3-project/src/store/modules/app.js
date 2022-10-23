@@ -1,21 +1,11 @@
 import { saveLocalData, getLocalData } from '../../utils/cache'
 
 let state = {
-  isShowNav: false
+  isShowNav: true
 }
 
 let getters = {
-  showNav: state => state.isShowNav
-}
-
-//产品
-let actions = {
-  SHOWNAV({commit}){
-    commit('SHOWNAV')
-  },
-  HIDENAV({commit}){
-    commit('HIDENAV')
-  }
+  isShowNav: state => state.isShowNav
 }
 
 //开发
@@ -24,12 +14,23 @@ let mutations = {
     state.isShowNav = true
   },
   HIDENAV(state){
-    state.isShowNav = true
+    state.isShowNav = false
+  }
+}
+
+//产品
+let actions = {
+  showNav({commit}){
+    commit('SHOWNAV')
+  },
+  hideNav({commit}){
+    commit('HIDENAV')
   }
 }
 
 
 const app = {
+    namespaced: true,
     state,
     getters,
     mutations,

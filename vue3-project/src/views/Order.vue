@@ -4,7 +4,7 @@
       title="订单列表"
       left-text=""
       left-arrow
-      @click-left="Utils.goPage('/home', {})"
+      @click-left="Utils.goPage('/home', {});store.dispatch('SHOWNAV');"
     />
     <Suspense>
       <!-- 插槽包裹异步组件 --> 
@@ -22,6 +22,7 @@
 <script>
 import List from '../components/List.vue'
 import { useRouter, useRoute } from 'vue-router';
+
 export default {
   name: 'order',
   components:{
@@ -30,7 +31,6 @@ export default {
   setup(){
     const router = useRouter() //全局路由的实例，是VueRouter的实例
     const route = useRoute() //route表示当前的路由信息，包含了当前的URL解析得到的信息
-
     return {
       Utils
     }

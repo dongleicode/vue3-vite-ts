@@ -56,9 +56,8 @@
 <script>
   import Banner from '../components/Banner.vue'
   import List1 from '../components/List1.vue'
-
+  import { useStates } from "../store/hooks";
   import { reactive, onMounted, toRefs, computed, watch, onUpdated, onUnmounted, provide} from 'vue';
-  import { useStore } from 'vuex'
   export default{
     components:{
       Banner,
@@ -68,8 +67,7 @@
     // props: {
     //   item: 'Bill'
     // },
-    setup (props){    
-      const store = useStore()    
+    setup (props){     
       let state = reactive({
         phone: '',
         name: 'vue3',
@@ -83,11 +81,11 @@
             return state.id + 2
         }), 
         num: 0,
-        list: computed(()=>store.getters.orderList)
+        list: computed(() => useStates(['orderList'], 'order').orderList)
+        // list: computed(()=>store.getters['order/orderList'])  //namespaced: true
       })
 
       provide('list', state.list)
-      
       // onMounted(() => {
       //     setInterval(() => {
       //       if(state.count < 20){

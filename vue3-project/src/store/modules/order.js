@@ -13,16 +13,6 @@ let getters = {
     orderDetail: state => state.orderDetail
 }
 
-//产品
-let actions = {
-  ORDERLIST({commit}){
-    commit('ORDERLIST')
-  },
-  ORDERDETAIL({commit}){
-    commit('ORDERDETAIL')
-  }
-}
-
 //开发
 let mutations = {
   ORDERLIST(state){
@@ -33,7 +23,18 @@ let mutations = {
   }
 }
 
+//产品
+let actions = {
+  orderList({commit}){
+    commit('ORDERLIST')
+  },
+  orderDetail({commit}){
+    commit('ORDERDETAIL')
+  }
+}
+
 const order = {
+    namespaced: true,
     state,
     getters,
     mutations,

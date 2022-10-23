@@ -18,30 +18,19 @@
 <script>
 import { Card } from "vant";
 import { toRefs, reactive, computed, getCurrentInstance } from "vue";
-import { useStore } from "vuex";
-import { useRouter } from "vue-router";
+import { useStates } from "../store/hooks";
 export default {
   components: {
     [Card.name]: Card,
   },
   setup() {
-    const store = useStore();
+    // const store = useStore();
     //    const router = useRouter() //全局路由的实例，是VueRouter的实例
     //    const { appContext, proxy } = getCurrentInstance()
     //    const { $utils } = appContext.config.globalProperties
-
-    // const goDetail = (i) => {
-    //   router.push({
-    //       path: '/details',
-    //       query: {id: i}
-    //   })
-    //   router.push({
-    //       name: 'details',
-    //       params: {id: i}
-    //   })
-    // };
+    
     let data = reactive({
-      lists: computed(() => store.getters.orderList),
+      lists: useStates(['orderList'], 'order').orderList,
     });
     return {
       ...toRefs(data),
