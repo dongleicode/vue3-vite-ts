@@ -14,6 +14,8 @@
       @save="onSave"
       @delete="onDelete"
     />
+
+    <van-button @click="Utils.goPage('/students', {})" plain type="primary">egg.js-mysql-学生列表</van-button>
   </div>
 </template>
 
